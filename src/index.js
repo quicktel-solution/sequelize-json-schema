@@ -242,7 +242,7 @@ function getModelSchema(model, options = {}) {
 }
 
 function getSequelizeSchema(seq, options = {}) {
-  const {modelOptions = {}} = options;
+  const {modelOptions = {}, useRefs} = options;
   // Per https://json-schema.org/understanding-json-schema/structuring.htmlk
   const schema = {
     $schema: 'http://json-schema.org/draft-07/schema#',
@@ -252,7 +252,7 @@ function getSequelizeSchema(seq, options = {}) {
 
   // Definitions
   for (const [name, model] of Object.entries(seq.models)) {
-    const mopts = {exclude: [], attributes: [], ...modelOptions[name]};
+    const mopts = {exclude: [], attributes: [], ...modelOptions[name], useRefs};
     if (options.attributes) mopts.attributes.push(...options.attributes);
     if (options.exclude) mopts.exclude.push(...options.exclude);
     const modelSchema = getModelSchema(model, mopts);
