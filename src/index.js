@@ -121,10 +121,12 @@ function getAttributeSchema(att) {
       const { precision, scale = 0 } = att.type.options
       const maxLength = precision - scale
       const maximum = Number(new Array(maxLength).fill(9).map(v => v).join(''))
+      const minimum = maximum * -1
       const multipleOf = Number(`${scale > 0 ? '0.' : ''}${new Array(scale > 0 ? scale - 1 : 0).fill(0).map(v => v).join('')}1`)
       schema = {
         ...NUMBER,
         maximum,
+        minimum,
         multipleOf
       };
       break;
