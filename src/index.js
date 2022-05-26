@@ -1,13 +1,13 @@
 // Common types.  These should never be exposed directly but, instead, be cloned
 // before being returned.  This avoids cross-contamination if a user modifies
 // the their schema.
-const ARRAY = {type: 'array'};
-const BOOLEAN = {type: 'boolean'};
-const INTEGER = {type: 'integer'};
-const NULL = {type: 'null'};
-const NUMBER = {type: 'number'};
-const OBJECT = {type: 'object'};
-const STRING = {type: 'string'};
+const ARRAY = { type: 'array' };
+const BOOLEAN = { type: 'boolean' };
+const INTEGER = { type: 'integer', maximum: 2147483647 };
+const NULL = { type: 'null' };
+const NUMBER = { type: 'number' };
+const OBJECT = { type: 'object' };
+const STRING = { type: 'string' };
 
 // Note: per sec. 4.3.2 of spec, the "any" type can be `true` rather than an empty
 // object.  While it makes the intent more explicit, having schemas always be
@@ -15,7 +15,7 @@ const STRING = {type: 'string'};
 // inspect or transform the generated schemas
 const ANY = {};
 
-const STRING_LENGTHS = {tiny: 255, medium: 16777215, long: 4294967295};
+const STRING_LENGTHS = { tiny: 255, medium: 16777215, long: 4294967295 };
 
 // Naive utility for detecting empty objects
 function _isEmpty(obj) {
@@ -92,7 +92,7 @@ function getAttributeSchema(att) {
 
     case 'VIRTUAL': {
       if (!att.type.returnType) throw Error(`No type defined for VIRTUAL field "${att.field}"`);
-      return getAttributeSchema({...att, type: att.type.returnType});
+      return getAttributeSchema({ ...att, type: att.type.returnType });
     }
   }
 
@@ -104,43 +104,54 @@ function getAttributeSchema(att) {
       schema = {
         ...ARRAY,
         // Sequelize requires att.type to be defined for ARRAYs
-        items: getAttributeSchema({type: att.type.type, allowNull: false})
+        items: getAttributeSchema({ type: att.type.type, allowNull: false })
       };
       break;
     }
 
-    case 'BIGINT': { schema = {...INTEGER, format: 'int64'}; break; }
-    case 'BLOB': { schema = {...STRING, contentEncoding: 'base64'}; break; }
-    case 'BOOLEAN': { schema = {...BOOLEAN}; break; }
-    case 'CHAR': { schema = {...STRING}; break; }
-    case 'CIDR': { schema = {...STRING}; break; }
+    case 'BIGINT': { schema = { ...INTEGER, format: 'int64' }; break; }
+    case 'BLOB': { schema = { ...STRING, contentEncoding: 'base64' }; break; }
+    case 'BOOLEAN': { schema = { ...BOOLEAN }; break; }
+    case 'CHAR': { schema = { ...STRING }; break; }
+    case 'CIDR': { schema = { ...STRING }; break; }
 
-    case 'DATE': { schema = {...STRING, format: 'date-time'}; break; }
-    case 'DATEONLY': { schema = {...STRING, format: 'date'}; break; }
-    case 'DECIMAL': { schema = {...NUMBER}; break; }
+    case 'DATE': { schema = { ...STRING, format: 'date-time' }; break; }
+    case 'DATEONLY': { schema = { ...STRING, format: 'date' }; break; }
+    case 'DECIMAL': {
+      const { precision, scale = 0 } = att.type.options
+      const maxLength = precision - scale
+      const maximum = Number(new Array(maxLength).fill(9).map(v => v).join(''))
+      const multipleOf = Number(`${scale > 0 ? '0.' : ''}${new Array(scale > 0 ? scale - 1 : 0).fill(0).map(v => v).join('')}1`)
+      schema = {
+        ...NUMBER,
+        maximum,
+        multipleOf
+      };
+      break;
+    }
 
     // This is the `key` for DOUBLE datatypes... ¯\_(ツ)_/¯
-    case 'DOUBLE PRECISION': { schema = {...NUMBER, format: 'double'}; break; }
-    case 'ENUM': { schema = {...STRING, enum: [...att.values]}; break; }
-    case 'FLOAT': { schema = {...NUMBER, format: 'float'}; break; }
+    case 'DOUBLE PRECISION': { schema = { ...NUMBER, format: 'double' }; break; }
+    case 'ENUM': { schema = { ...STRING, enum: [...att.values] }; break; }
+    case 'FLOAT': { schema = { ...NUMBER, format: 'float' }; break; }
     // GEOGRAPHY - needs definition
     // GEOMETRY - needs definition
     // HSTORE - needs definition
-    case 'INET': {schema = {anyOf: [{...STRING, format: 'ipv4'}, {...STRING, format: 'ipv6'}]}; break; }
+    case 'INET': { schema = { anyOf: [{ ...STRING, format: 'ipv4' }, { ...STRING, format: 'ipv6' }] }; break; }
 
-    case 'INTEGER': { schema = {...INTEGER, format: 'int32'}; break; }
-    case 'JSON': { schema = {...ANY}; break; }
-    case 'JSONB': { schema = {...ANY}; break; }
-    case 'MACADDR': { schema = {...STRING}; break; }
-    case 'MEDIUMINT': { schema = {...INTEGER}; break; }
+    case 'INTEGER': { schema = { ...INTEGER }; break; }
+    case 'JSON': { schema = { ...ANY }; break; }
+    case 'JSONB': { schema = { ...ANY }; break; }
+    case 'MACADDR': { schema = { ...STRING }; break; }
+    case 'MEDIUMINT': { schema = { ...INTEGER }; break; }
     // NOW: null,
-    case 'NUMBER': { schema = {...NUMBER}; break; }
+    case 'NUMBER': { schema = { ...NUMBER }; break; }
     // RANGE: null,
-    case 'REAL': { schema = {...NUMBER}; break; }
-    case 'SMALLINT': { schema = {...INTEGER}; break; }
+    case 'REAL': { schema = { ...NUMBER }; break; }
+    case 'SMALLINT': { schema = { ...INTEGER }; break; }
 
     case 'STRING': {
-      schema = {...STRING};
+      schema = { ...STRING };
 
       // Include max char length if available
       let length = att.type._length || (att.type.options && att.type.options.length);
@@ -150,17 +161,17 @@ function getAttributeSchema(att) {
       break;
     }
 
-    case 'TIME': { schema = {...STRING, format: 'time'}; break; }
-    case 'TINYINT': { schema = {...NUMBER}; break; }
-    case 'UUID': { schema = {...STRING, format: 'uuid'}; break; }
-    case 'UUIDV1': { schema = {...STRING, format: 'uuid'}; break; }
-    case 'UUIDV4': { schema = {...STRING, format: 'uuid'}; break; }
+    case 'TIME': { schema = { ...STRING, format: 'time' }; break; }
+    case 'TINYINT': { schema = { ...NUMBER }; break; }
+    case 'UUID': { schema = { ...STRING, format: 'uuid' }; break; }
+    case 'UUIDV1': { schema = { ...STRING, format: 'uuid' }; break; }
+    case 'UUIDV4': { schema = { ...STRING, format: 'uuid' }; break; }
   }
 
   // Use ANY for anything that's not recognized.  'Not entirely sure
   // this is the right thing to do.  File an issue if you think it should behave
   // differently.
-  if (!schema) schema = {type: {...ANY}};
+  if (!schema) schema = { type: { ...ANY } };
 
   // Add null? (Sequelize allowNull defaults to true)
   if (att.allowNull !== false) schema = _addType(schema, 'null');
@@ -178,8 +189,8 @@ function getAttributeSchema(att) {
  * `attributes`)
  */
 function getModelSchema(model, options = {}) {
-  const schema = {...OBJECT, properties: {}, required: []};
-  const {useRefs = true} = options;
+  const schema = { ...OBJECT, properties: {}, required: [] };
+  const { useRefs = true } = options;
 
   // Emit warnings about legacy options
   if (options.private) {
@@ -211,7 +222,7 @@ function getModelSchema(model, options = {}) {
   // Define associations(?)
   if (useRefs !== false) {
     for (const [, assoc] of Object.entries(model.associations)) {
-      const {associationType, target, associationAccessor} = assoc;
+      const { associationType, target, associationAccessor } = assoc;
 
       if (!_includeAttribute(options, associationAccessor)) continue;
 
@@ -219,13 +230,13 @@ function getModelSchema(model, options = {}) {
       switch (associationType) {
         case 'HasOne':
         case 'BelongsTo':
-          assSchema = {$ref: `#/definitions/${target.name}`};
+          assSchema = { $ref: `#/definitions/${target.name}` };
           break;
         case 'HasMany':
         case 'BelongsToMany':
           assSchema = {
             type: 'array',
-            items: {$ref: `#/definitions/${target.name}`}
+            items: { $ref: `#/definitions/${target.name}` }
           };
           break;
         default:
@@ -242,7 +253,7 @@ function getModelSchema(model, options = {}) {
 }
 
 function getSequelizeSchema(seq, options = {}) {
-  const {modelOptions = {}, useRefs} = options;
+  const { modelOptions = {}, useRefs } = options;
   // Per https://json-schema.org/understanding-json-schema/structuring.htmlk
   const schema = {
     $schema: 'http://json-schema.org/draft-07/schema#',
@@ -252,7 +263,7 @@ function getSequelizeSchema(seq, options = {}) {
 
   // Definitions
   for (const [name, model] of Object.entries(seq.models)) {
-    const mopts = {exclude: [], attributes: [], ...modelOptions[name], useRefs};
+    const mopts = { exclude: [], attributes: [], ...modelOptions[name], useRefs };
     if (options.attributes) mopts.attributes.push(...options.attributes);
     if (options.exclude) mopts.exclude.push(...options.exclude);
     const modelSchema = getModelSchema(model, mopts);

@@ -1,5 +1,5 @@
 {
-  "name": "sequelize-json-schema",
+  "name": "@quicktel-solution/sequelize-json-schema",
   "version": "2.1.1",
   "description": "Use your Sequelize models in JSON Schemas or Swagger",
   "keywords": [
@@ -25,27 +25,25 @@
     "type": "git",
     "url": "git+https://github.com/chaliy/sequelize-json-schema.git"
   },
-  "author": {
-    "name": "Robert Kieffer",
-    "email": "robert@broofa.com",
-    "url": "https://www.github.com/broofa"
-  },
+  "author": "Robert Kieffer <robert@broofa.com> (https://www.github.com/broofa)",
   "contributors": [
-    {
-      "name": "Mike Chaliy",
-      "email": "mike@chaliy.name",
-      "url": "https://github.com/chaliy"
-    },
-    {
-      "name": "Robert Kieffer",
-      "email": "robert@broofa.com",
-      "url": "https://www.github.com/broofa"
-    }
+    "Mike Chaliy <mike@chaliy.name> (https://github.com/chaliy)",
+    "Robert Kieffer <robert@broofa.com> (https://www.github.com/broofa)"
   ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/chaliy/sequelize-json-schema/issues"
   },
   "homepage": "https://github.com/chaliy/sequelize-json-schema#readme",
-  "dependencies": {}
+  "devDependencies": {
+    "ajv": "6.10.2",
+    "eslint": "6.8.0",
+    "mocha": "6.2.2",
+    "runmd": "1.2.1",
+    "sequelize": "5.21.3",
+    "sqlite3": "4.1.1"
+  },
+  "directories": {
+    "test": "test"
+  }
 }
