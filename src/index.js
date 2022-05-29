@@ -3,7 +3,7 @@
 // the their schema.
 const ARRAY = { type: 'array' };
 const BOOLEAN = { type: 'boolean' };
-const INTEGER = { type: 'integer', maximum: 2147483647 };
+const INTEGER = { type: 'integer', maximum: 2147483647, minimum: -2147483647 };
 const NULL = { type: 'null' };
 const NUMBER = { type: 'number' };
 const OBJECT = { type: 'object' };
